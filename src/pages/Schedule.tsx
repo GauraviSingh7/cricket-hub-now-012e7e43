@@ -1,6 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
-import { fetchAllMatches } from "@/lib/mock-data";
+import { useUpcomingMatches } from "@/hooks/use-matches";
 import LoadingState from "@/components/LoadingState";
 import ErrorState from "@/components/ErrorState";
 import EmptyState from "@/components/EmptyState";
@@ -10,17 +9,25 @@ import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import type { Match } from "@/lib/types";
 
-const tournaments = ["All Tournaments", "ICC Cricket World Cup 2024", "Border-Gavaskar Trophy 2024-25", "Big Bash League 2024-25", "SA20 League 2025"];
-const teams = ["All Teams", "India", "Australia", "England", "Pakistan", "Adelaide Strikers", "Melbourne Stars"];
-
 export default function Schedule() {
   const [selectedTournament, setSelectedTournament] = useState("All Tournaments");
   const [selectedTeam, setSelectedTeam] = useState("All Teams");
   
-  const { data: matches, isLoading, error, refetch } = useQuery({
-    queryKey: ["matches"],
-    queryFn: fetchAllMatches,
-  });
+  // Fetch upcoming matches
+  const { data: matches, isLoading, error, refetch } = useUpcomingMatches();
+
+  // Extract unique tournaments and teams from data
+  const { tournaments, teams } = useMemo(() => {
+    if (!matches) return { tournaments: ["All Tournaments"], teams: ["All Teams"] };
+    
+    const tournamentSet = new Set(matches.map(m => m.tournament));
+    const teamSet = new Set(matches.flatMap(m => [m.team1.name, m.team2.name]));
+    
+    return {
+      tournaments: ["All Tournaments", ...Array.from(tournamentSet)],
+      teams: ["All Teams", ...Array.from(teamSet)],
+    };
+  }, [matches]);
 
   // Filter and group matches by date
   const groupedMatches = useMemo(() => {
@@ -176,7 +183,7 @@ function ScheduleRow({ match }: { match: Match }) {
           <span>•</span>
           <span className="flex items-center gap-1">
             <MapPin className="h-3 w-3" />
-            {match.venue.split(',')[0]}
+            {match.venue?.split(',')[0] || 'TBD'}
           </span>
         </div>
       </div>

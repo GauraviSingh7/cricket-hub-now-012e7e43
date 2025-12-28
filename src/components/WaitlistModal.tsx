@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
+import { useWaitlist } from "@/hooks/use-waitlist";
 import { Mail } from "lucide-react";
 
 interface WaitlistModalProps {
@@ -11,25 +12,29 @@ interface WaitlistModalProps {
 
 export default function WaitlistModal({ open, onOpenChange }: WaitlistModalProps) {
   const [email, setEmail] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { mutate: submitEmail, isPending } = useWaitlist({
+    onSuccess: () => {
+      toast({
+        title: "You're on the list!",
+        description: "We'll notify you when STRYKER launches.",
+      });
+      setEmail("");
+      onOpenChange(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Something went wrong",
+        description: error.message || "Please try again later.",
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-
-    setIsSubmitting(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    toast({
-      title: "You're on the list!",
-      description: "We'll notify you when STRYKER launches.",
-    });
-    
-    setEmail("");
-    setIsSubmitting(false);
-    onOpenChange(false);
+    submitEmail(email);
   };
 
   return (
@@ -57,10 +62,10 @@ export default function WaitlistModal({ open, onOpenChange }: WaitlistModalProps
             </div>
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isPending}
               className="px-6 py-2 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
             >
-              {isSubmitting ? "..." : "Join"}
+              {isPending ? "..." : "Join"}
             </button>
           </div>
           <p className="mt-3 text-xs text-muted-foreground">
