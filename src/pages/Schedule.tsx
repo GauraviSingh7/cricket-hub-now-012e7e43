@@ -1,6 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
-import { fetchAllMatches } from "@/lib/mock-data";
+import { useSchedules } from "@/hooks/use-cricket-data";
 import LoadingState from "@/components/LoadingState";
 import ErrorState from "@/components/ErrorState";
 import EmptyState from "@/components/EmptyState";
@@ -17,10 +16,7 @@ export default function Schedule() {
   const [selectedTournament, setSelectedTournament] = useState("All Tournaments");
   const [selectedTeam, setSelectedTeam] = useState("All Teams");
   
-  const { data: matches, isLoading, error, refetch } = useQuery({
-    queryKey: ["matches"],
-    queryFn: fetchAllMatches,
-  });
+  const { data: matches, isLoading, error, refetch } = useSchedules();
 
   // Filter and group matches by date
   const groupedMatches = useMemo(() => {

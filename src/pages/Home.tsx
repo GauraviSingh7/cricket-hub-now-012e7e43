@@ -1,6 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
-import { fetchAllMatches, fetchNews, fetchDiscussions } from "@/lib/mock-data";
+import { useMatches, useNews, useDiscussions } from "@/hooks/use-cricket-data";
 import MatchCard from "@/components/MatchCard";
 import NewsCard from "@/components/NewsCard";
 import DiscussionCard from "@/components/DiscussionCard";
@@ -10,20 +9,9 @@ import EmptyState from "@/components/EmptyState";
 import { Radio, Newspaper, MessageCircle, TrendingUp } from "lucide-react";
 
 export default function Home() {
-  const { data: matches, isLoading: matchesLoading, error: matchesError, refetch: refetchMatches } = useQuery({
-    queryKey: ["matches"],
-    queryFn: fetchAllMatches,
-  });
-
-  const { data: news, isLoading: newsLoading, error: newsError, refetch: refetchNews } = useQuery({
-    queryKey: ["news"],
-    queryFn: fetchNews,
-  });
-
-  const { data: discussions, isLoading: discussionsLoading, error: discussionsError, refetch: refetchDiscussions } = useQuery({
-    queryKey: ["discussions"],
-    queryFn: () => fetchDiscussions(),
-  });
+  const { data: matches, isLoading: matchesLoading, error: matchesError, refetch: refetchMatches } = useMatches();
+  const { data: news, isLoading: newsLoading, error: newsError, refetch: refetchNews } = useNews();
+  const { data: discussions, isLoading: discussionsLoading, error: discussionsError, refetch: refetchDiscussions } = useDiscussions();
 
   const liveMatches = matches?.filter(m => m.status === "LIVE") || [];
   const upcomingMatches = matches?.filter(m => m.status === "UPCOMING").slice(0, 2) || [];
