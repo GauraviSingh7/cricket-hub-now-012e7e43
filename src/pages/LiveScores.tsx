@@ -1,6 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
-import { fetchAllMatches } from "@/lib/mock-data";
+import { useMatches } from "@/hooks/use-cricket-data";
 import MatchCard from "@/components/MatchCard";
 import LoadingState from "@/components/LoadingState";
 import ErrorState from "@/components/ErrorState";
@@ -14,9 +13,7 @@ type FilterStatus = "ALL" | "LIVE" | "UPCOMING" | "FINISHED";
 export default function LiveScores() {
   const [filter, setFilter] = useState<FilterStatus>("ALL");
   
-  const { data: matches, isLoading, error, refetch } = useQuery({
-    queryKey: ["matches"],
-    queryFn: fetchAllMatches,
+  const { data: matches, isLoading, error, refetch } = useMatches({
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 

@@ -1,7 +1,6 @@
 import { useParams, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
-import { fetchMatchById, fetchCommentary, fetchScorecard, fetchDiscussions } from "@/lib/mock-data";
+import { useMatch, useCommentary, useScorecard, useDiscussions } from "@/hooks/use-cricket-data";
 import LoadingState from "@/components/LoadingState";
 import ErrorState from "@/components/ErrorState";
 import DiscussionCard from "@/components/DiscussionCard";
@@ -10,37 +9,19 @@ import { useState } from "react";
 import { ArrowLeft, AlertTriangle, MapPin, Clock, MessageCircle, Share2, Bookmark } from "lucide-react";
 import type { Match, BatsmanStats, BowlerStats, CommentaryBall, FullScorecard, DiscussionPost } from "@/lib/types";
 
-
 type TabType = "commentary" | "scorecard" | "stats" | "discussion";
 
 export default function MatchDetail() {
   const { matchId } = useParams<{ matchId: string }>();
   const [activeTab, setActiveTab] = useState<TabType>("commentary");
 
-  const { data: match, isLoading: matchLoading, error: matchError, refetch: refetchMatch } = useQuery({
-    queryKey: ["match", matchId],
-    queryFn: () => fetchMatchById(matchId!),
-    enabled: !!matchId,
+  const { data: match, isLoading: matchLoading, error: matchError, refetch: refetchMatch } = useMatch(matchId, {
     refetchInterval: 30000,
   });
 
-  const { data: commentary } = useQuery({
-    queryKey: ["commentary", matchId],
-    queryFn: () => fetchCommentary(matchId!),
-    enabled: !!matchId && activeTab === "commentary",
-  });
-
-  const { data: scorecard } = useQuery({
-    queryKey: ["scorecard", matchId],
-    queryFn: () => fetchScorecard(matchId!),
-    enabled: !!matchId && activeTab === "scorecard",
-  });
-
-  const { data: discussions } = useQuery({
-    queryKey: ["discussions", matchId],
-    queryFn: () => fetchDiscussions(matchId),
-    enabled: !!matchId && activeTab === "discussion",
-  });
+  const { data: commentary } = useCommentary(activeTab === "commentary" ? matchId : undefined);
+  const { data: scorecard } = useScorecard(activeTab === "scorecard" ? matchId : undefined);
+  const { data: discussions } = useDiscussions(activeTab === "discussion" ? matchId : undefined);
 
   if (matchLoading) {
     return (
