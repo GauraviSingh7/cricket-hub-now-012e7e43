@@ -17,8 +17,12 @@ export function useLiveMatches(options?: { refetchInterval?: number }) {
   return useQuery<LiveMatch[]>({
     queryKey: ["live-matches"],
     queryFn: async () => {
-      const res = await api.get("/api/v1/matches/live");
-      return res.data.data; // backend returns { data: LiveMatch[] }
+      try {
+        const res = await api.get("/api/v1/matches/live");
+        return res.data?.data ?? [];
+      } catch {
+        return [];
+      }
     },
     refetchInterval: options?.refetchInterval ?? 30_000,
   });
