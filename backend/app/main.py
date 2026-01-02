@@ -1,6 +1,4 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-
 from app.core import logging
 from app.api.routes import matches, schedules
 from app.services.live_snapshot_service import poll_and_store_live_matches
@@ -10,26 +8,14 @@ from app.services.schedule_service import sync_schedules_to_db
 import asyncio
 import logging
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level = logging.INFO)
 
-app = FastAPI(title="Stryker MVP API")
-
-# ✅ ADD CORS MIDDLEWARE (THIS IS THE FIX)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:8080",  # Vite frontend
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app = FastAPI(title = "Stryker MVP API")
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status":"ok"}
 
-# Routers
 app.include_router(matches.router)
 app.include_router(schedules.router)
 
@@ -43,13 +29,15 @@ async def startup_event():
                 except Exception:
                     pass
                 await asyncio.sleep(15)
-
         asyncio.create_task(poller())
-
     asyncio.create_task(start_live_polling())
-
+    
     db = SessionLocal()
     try:
         await sync_schedules_to_db(db)
     finally:
         db.close()
+
+
+
+
