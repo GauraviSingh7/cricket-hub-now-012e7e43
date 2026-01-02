@@ -10,7 +10,7 @@ import type {
 
 // Schedules
 export async function fetchSchedules(): Promise<ApiSchedulesResponse> {
-  return apiClient<ApiSchedulesResponse>('/schedules');
+  return apiClient<ApiSchedulesResponse>('/schedules/');
 }
 
 // Matches
