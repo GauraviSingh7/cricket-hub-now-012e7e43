@@ -9,8 +9,11 @@ interface MatchCardProps {
 }
 
 export default function MatchCard({ match, variant = "full" }: MatchCardProps) {
-  const isLive = match.status === "LIVE";
-  const isUpcoming = match.status === "UPCOMING";
+  // Treat everything except NS / FINISHED as LIVE
+  const statusLower = match.status?.toLowerCase() ?? "";
+  const isUpcoming = statusLower === "ns";
+  const isFinished = statusLower === "finished";
+  const isLive = !isUpcoming && !isFinished;
 
   const matchId = match.match_id ?? match.id;
 
@@ -30,7 +33,7 @@ export default function MatchCard({ match, variant = "full" }: MatchCardProps) {
               "inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium",
               isLive && "bg-live text-live-foreground",
               isUpcoming && "bg-muted text-muted-foreground",
-              match.status === "FINISHED" && "bg-accent/10 text-accent"
+              isFinished && "bg-accent/10 text-accent"
             )}
           >
             {isLive && (
@@ -50,46 +53,56 @@ export default function MatchCard({ match, variant = "full" }: MatchCardProps) {
           )}
         </div>
 
-        <span className="text-xs text-muted-foreground">{match.format}</span>
+        <span className="text-xs text-muted-foreground">
+          {match.format ?? match.match_type ?? "—"}
+        </span>
       </div>
 
       {/* League & Venue */}
       <p className="text-xs text-muted-foreground mb-3 line-clamp-1">
-        {match.league.name} • {match.venue.name}
+        {match.league?.name ?? "—"} • {match.venue?.name ?? "Venue TBC"}
       </p>
 
       {/* Teams */}
       <div className="space-y-2">
         <TeamRow
           team={match.home_team}
-          innings={match.innings?.find(i => i.team.id === match.home_team.id)}
+          innings={match.innings?.find(
+            (i) => i.team?.id === match.home_team?.id
+          )}
         />
         <TeamRow
           team={match.away_team}
-          innings={match.innings?.find(i => i.team.id === match.away_team.id)}
+          innings={match.innings?.find(
+            (i) => i.team?.id === match.away_team?.id
+          )}
         />
       </div>
 
       {/* Footer */}
       <div className="mt-4 pt-3 border-t border-border flex items-center justify-between">
-        <p className={cn(
-          "text-sm",
-          isLive ? "text-foreground font-medium" : "text-muted-foreground"
-        )}>
+        <p
+          className={cn(
+            "text-sm",
+            isLive ? "text-foreground font-medium" : "text-muted-foreground"
+          )}
+        >
           {isUpcoming ? (
             <span className="flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5" />
               {formatMatchTime(match.start_time)}
             </span>
           ) : (
-            match.statusText
+            match.statusText ?? match.status
           )}
         </p>
         <ChevronRight className="h-4 w-4 text-muted-foreground" />
       </div>
 
       {match.context && (
-        <p className="mt-2 text-xs text-accent font-medium">{match.context}</p>
+        <p className="mt-2 text-xs text-accent font-medium">
+          {match.context}
+        </p>
       )}
     </Link>
   );
@@ -99,16 +112,24 @@ function TeamRow({
   team,
   innings,
 }: {
-  team: Match["home_team"];
+  team: Match["home_team"] | Match["away_team"];
   innings?: Match["innings"] extends (infer I)[] ? I : never;
 }) {
+  if (!team) {
+    return (
+      <div className="flex items-center py-1 text-sm text-muted-foreground">
+        TBC
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center justify-between py-1">
       <div className="flex items-center gap-2">
         <div className="w-6 h-4 rounded bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground">
-          {team.short_name}
+          {team.short_name ?? team.code ?? "—"}
         </div>
-        <span className="text-sm text-foreground">{team.name}</span>
+        <span className="text-sm text-foreground">{team.name ?? "TBC"}</span>
       </div>
 
       {innings && (

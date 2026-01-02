@@ -1,5 +1,5 @@
 import { Helmet } from "react-helmet-async";
-import { useLiveMatches } from "@/hooks/use-cricket-data";
+import { useSchedules } from "@/hooks/use-cricket-data";
 import MatchCard from "@/components/MatchCard";
 import LoadingState from "@/components/LoadingState";
 import ErrorState from "@/components/ErrorState";
@@ -10,25 +10,42 @@ import { useState } from "react";
 
 type FilterStatus = "ALL" | "LIVE" | "UPCOMING" | "FINISHED";
 
+/**
+ * Status mapping rule:
+ * - NS -> UPCOMING
+ * - Finished -> FINISHED
+ * - everything else -> LIVE
+ */
+function mapStatus(status: string): FilterStatus {
+  const s = status.toLowerCase();
+
+  if (s === "ns") return "UPCOMING";
+  if (s === "finished") return "FINISHED";
+  return "LIVE";
+}
+
 export default function LiveScores() {
   const [filter, setFilter] = useState<FilterStatus>("ALL");
-  
-  const { data: matches, isLoading, error, refetch } = useLiveMatches({
-    refetchInterval: 30000, // Refresh every 30 seconds
-  });
 
-  const filteredMatches = matches?.filter(m => {
-    if (filter === "ALL") return true;
-    return m.status === filter;
-  }) || [];
+  const { data: matches, isLoading, error, refetch } = useSchedules();
 
-  const liveCount = matches?.filter(m => m.status === "LIVE").length || 0;
+  const filteredMatches =
+    matches?.filter((m) => {
+      if (filter === "ALL") return true;
+      return mapStatus(m.status) === filter;
+    }) || [];
+
+  const liveCount =
+    matches?.filter((m) => mapStatus(m.status) === "LIVE").length || 0;
 
   return (
     <>
       <Helmet>
         <title>Live Cricket Scores | STRYKER</title>
-        <meta name="description" content="Real-time cricket scores and match updates. Follow every ball, every run, every wicket live." />
+        <meta
+          name="description"
+          content="Real-time cricket scores and match updates. Follow every ball, every run, every wicket live."
+        />
       </Helmet>
 
       {/* Header */}
@@ -52,36 +69,38 @@ export default function LiveScores() {
       <div className="container-content py-8">
         {/* Filter Tabs */}
         <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
-          {(["ALL", "LIVE", "UPCOMING", "FINISHED"] as FilterStatus[]).map((status) => (
-            <button
-              key={status}
-              onClick={() => setFilter(status)}
-              className={cn(
-                "px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap",
-                filter === status
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {status === "LIVE" && (
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="relative flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full rounded-full bg-live opacity-75 animate-ping" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-live" />
+          {(["ALL", "LIVE", "UPCOMING", "FINISHED"] as FilterStatus[]).map(
+            (status) => (
+              <button
+                key={status}
+                onClick={() => setFilter(status)}
+                className={cn(
+                  "px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap",
+                  filter === status
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {status === "LIVE" && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="relative flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full rounded-full bg-live opacity-75 animate-ping" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-live" />
+                    </span>
+                    Live
                   </span>
-                  Live
-                </span>
-              )}
-              {status === "ALL" && "All Matches"}
-              {status === "UPCOMING" && (
-                <span className="inline-flex items-center gap-1.5">
-                  <Clock className="h-3.5 w-3.5" />
-                  Upcoming
-                </span>
-              )}
-              {status === "FINISHED" && "Completed"}
-            </button>
-          ))}
+                )}
+                {status === "ALL" && "All Matches"}
+                {status === "UPCOMING" && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <Clock className="h-3.5 w-3.5" />
+                    Upcoming
+                  </span>
+                )}
+                {status === "FINISHED" && "Completed"}
+              </button>
+            )
+          )}
         </div>
 
         {/* Auto-refresh indicator */}
@@ -94,7 +113,10 @@ export default function LiveScores() {
         {isLoading ? (
           <LoadingState message="Fetching latest scores..." />
         ) : error ? (
-          <ErrorState message="Unable to fetch match data. Please try again." onRetry={() => refetch()} />
+          <ErrorState
+            message="Unable to fetch match data. Please try again."
+            onRetry={() => refetch()}
+          />
         ) : filteredMatches.length === 0 ? (
           <EmptyState
             title={`No ${filter.toLowerCase()} matches`}
@@ -102,8 +124,8 @@ export default function LiveScores() {
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredMatches.map(match => (
-              <MatchCard key={match.id} match={match} />
+            {filteredMatches.map((match) => (
+              <MatchCard key={match.match_id} match={match} />
             ))}
           </div>
         )}
